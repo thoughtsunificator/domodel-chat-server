@@ -2,7 +2,6 @@
 	"name": "domodel-chat-server",
 	"description": "Back-end for domodel-chat",
 	"dependencies": {
-		"cors": "^2.8.5",
 		"express": "^4.17.1",
 		"rate-limiter-flexible": "^2.2.4",
 		"socket.io": "^4.1.3"
