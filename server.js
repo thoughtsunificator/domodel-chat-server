@@ -4,7 +4,7 @@ const app = express()
 const path = require("path")
 const server = require("http").createServer(app)
 const { RateLimiterMemory } = require('rate-limiter-flexible')
-const io = require("socket.io")(server)
+const io = require("socket.io")(httpServer, {  cors: {    origin: "https://thoughtsunificator.github.io", methods: ["GET", "POST"] }});
 
 const PORT = process.env.PORT || 3001
 const ALLOWED_CHARACTERS_NICKNAME = [..."abcdefghijklmnopqrstuvwxyz1234567890-_"]
