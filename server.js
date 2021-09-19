@@ -40,32 +40,31 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 2,
 })
 
-
 server.listen(PORT, () => {
 	console.log("Server listening at port %d", PORT)
 })
 
-io.use(async (socket, next) => {
+io.use((async (socket, next) => {
 	try {
 		await rateLimiter.consume(socket.handshake.address)
 		next()
 	} catch(rejRes) {
-		socket.emit('blocked', { 'retry-ms': rejRes.msBeforeNext })
+		console.error(rejRes)
 	}
-})
+}))
 
 io.on("connection", socket => {
 
 	console.log("connection " + socket.id)
 
-	socket.use(async (packet, next) => {
+	socket.use((async (packet, next) => {
 		try {
 			await rateLimiter.consume(socket.handshake.address)
 			next()
 		} catch(rejRes) {
-			socket.emit('blocked', { 'retry-ms': rejRes.msBeforeNext })
+			console.error(rejRes)
 		}
-	})
+	}))
 
 	const currentUser = { nickname: "Anon", id: socket.id }
 
