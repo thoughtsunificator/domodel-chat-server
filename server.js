@@ -339,7 +339,7 @@ io.on("connection", socket => {
 					message: `To ${nickname}: ${message}`,
 				}
 			} )
-			io.sockets.connected[user.id].emit("message send", {
+			io.to(user.id).emit("message send", {
 				message: {
 					source: "---", time: new Date().getTime(),
 					message: `From ${currentUser.nickname}: ${message}`,
