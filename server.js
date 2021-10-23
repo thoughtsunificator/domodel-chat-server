@@ -78,7 +78,7 @@ io.on("connection", socket => {
 	socket.emit("message send", {
 		message: {
 			source: "---", time: new Date().getTime(),
-			message: `Welcome to domodel-socket-chat ! ${_users.length} user(s) online.`,
+			message: `Welcome to domodel-socket-chat ! ${_users.length} user(s) online. You might want to join #general or #help`,
 		}
 	})
 
