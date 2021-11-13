@@ -1,4 +1,4 @@
 {
-	"FRONT_URL": "https://thoughtsunificator.github.io",
+	"FRONT_URL": "http://localhost:3000",
 	"PORT": 3001
 }
