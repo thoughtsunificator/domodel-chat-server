@@ -1,28 +1,29 @@
-// Setup basic express server
-const express = require("express")
+import express from "express"
+import http from "http"
+import { RateLimiterMemory } from "rate-limiter-flexible"
+import { Server } from "socket.io"
+import config from "@thoughtsunificator/config-env"
+
 const app = express()
-const path = require("path")
-const server = require("http").createServer(app)
-const { RateLimiterMemory } = require('rate-limiter-flexible')
-const io = require("socket.io")(server, {
+const httpServer = http.createServer(app)
+const io = new Server(httpServer, {
 	cors: {
-		origin: "https://thoughtsunificator.github.io",
+		origin: config.FRONT_URL,
 		methods: ["GET", "POST"]
 	}
 })
 
-const PORT = process.env.PORT || 3001
 const ALLOWED_CHARACTERS_NICKNAME = [..."abcdefghijklmnopqrstuvwxyz1234567890-_"]
 const ALLOWED_CHARACTERS_CHANNEL = [..."abcdefghijklmnopqrstuvwxyz1234567890"]
 
-const _users = [] // TODO there must be a better way to persist data in-memory
-const _channels = [ // TODO there must be a better way to persist data in-memory
+const _users = []
+const _channels = [
 	{
 		owner: null,
 		topic: "Some random topic",
 		name: "#Programming",
 		messages: [],
-		users: [] // only stores id
+		users: []
 	},
 	{
 		owner: null,
@@ -45,8 +46,8 @@ const rateLimiter = new RateLimiterMemory({
 	duration: 2,
 })
 
-server.listen(PORT, () => {
-	console.log("Server listening at port %d", PORT)
+app.get("*", function(req, res) {
+	res.redirect(config.FRONT_URL)
 })
 
 io.use((async (socket, next) => {
@@ -114,7 +115,6 @@ io.on("connection", socket => {
 			}
 		}
 		let channel = _channels.find(channel => channel.name === name)
-		// TODO check if nick is already taken...
 		if (typeof channel !== "undefined") {
 			const channelUsers = channel.users.map(userId => _users.find(user => user.id === userId))
 			const nicknames = channelUsers.map(user => user.nickname)
@@ -292,7 +292,6 @@ io.on("connection", socket => {
 
 	socket.on("nickname set", nickname => {
 		const userChannels = _channels.filter(channel => channel.users.includes(socket.id) === true)
-		// check if nickname is valid
 		const chars = [...nickname]
 		const invalidNickMessage = {
 			source: "---", time: new Date().getTime(),
@@ -369,4 +368,8 @@ io.on("connection", socket => {
 		}
 	})
 
+})
+
+httpServer.listen(config.PORT, () => {
+	console.log("Server listening at port %d", config.PORT)
 })

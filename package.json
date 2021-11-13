@@ -1,15 +1,17 @@
 {
 	"name": "domodel-chat-server",
+	"type": "module",
 	"description": "Back-end for domodel-chat",
 	"scripts": {
 		"start": "forever server.js",
 		"dev": "nodemon server.js"
 	},
 	"dependencies": {
+		"@thoughtsunificator/config-env": "^1.0.3",
 		"express": "^4.17.1",
 		"forever": "^4.0.1",
 		"rate-limiter-flexible": "^2.2.4",
-		"socket.io": "^4.1.3"
+		"socket.io": "^4.3.2"
 	},
 	"repository": {
 		"type": "git",
