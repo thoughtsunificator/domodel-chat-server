@@ -4,9 +4,9 @@
 class SocketConnection {
 
 	/**
-	 * @param {[type]} io
-	 * @param {[type]} socket
-	 * @param {[type]} chat
+	 * @param {object} io
+	 * @param {object} socket
+	 * @param {object} chat
 	 */
 	constructor(io, socket, chat) {
 		this._io = io
@@ -20,7 +20,7 @@ class SocketConnection {
 
 	/**
 	 * @readonly
-	 * @type {[type]}}
+	 * @type {object}
 	 */
 	get io() {
 		return this._io
@@ -28,7 +28,7 @@ class SocketConnection {
 
 	/**
 	 * @readonly
-	 * @type {[type]}}
+	 * @type {object}
 	 */
 	get socket() {
 		return this._socket

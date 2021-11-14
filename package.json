@@ -4,7 +4,8 @@
 	"description": "Back-end for domodel-chat",
 	"scripts": {
 		"start": "forever server.js",
-		"dev": "nodemon server.js"
+		"dev": "nodemon server.js",
+		"generate-docs": "jsdoc --configure .jsdoc.json --verbose"
 	},
 	"dependencies": {
 		"@thoughtsunificator/config-env": "^1.0.3",
@@ -24,6 +25,9 @@
 	"author": "Romain Lebesle <oss@thoughtsunificator.me> (https://thoughtsunificator.me)",
 	"license": "MIT",
 	"devDependencies": {
+		"docdash": "^1.2.0",
+		"eslint": "^8.2.0",
+		"jsdoc": "^3.6.7",
 		"nodemon": "^2.0.14"
 	}
 }

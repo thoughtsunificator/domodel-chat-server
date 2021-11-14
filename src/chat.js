@@ -30,7 +30,7 @@ class Chat {
 	static ALLOWED_CHARACTERS_CHANNEL = [..."abcdefghijklmnopqrstuvwxyz1234567890"]
 
 	/**
-	 * @param {} database
+	 * @param {object} database
 	 */
 	constructor(database) {
 		this._database = database
@@ -39,14 +39,14 @@ class Chat {
 
 	/**
 	 * @readonly
-	 * @type {type}
+	 * @type {object}
 	 */
 	get database() {
 		return this._database
 	}
 
 	/**
-	 * @type {type}
+	 * @type {object}
 	 */
 	get user() {
 		return this._user
