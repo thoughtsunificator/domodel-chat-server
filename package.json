@@ -1,15 +1,17 @@
 {
-	"name": "domodel-chat-server",
+	"name": "@domodel-chat/server",
 	"type": "module",
 	"description": "Back-end for domodel-chat",
 	"scripts": {
 		"start": "forever server.js",
-		"dev": "nodemon server.js"
+		"dev": "nodemon server.js",
+		"generate-docs": "jsdoc --configure .jsdoc.json --verbose"
 	},
 	"dependencies": {
 		"@thoughtsunificator/config-env": "^1.0.3",
 		"express": "^4.17.1",
 		"forever": "^4.0.1",
+		"mongodb": "^4.1.4",
 		"rate-limiter-flexible": "^2.2.4",
 		"socket.io": "^4.3.2"
 	},
@@ -23,6 +25,10 @@
 	"author": "Romain Lebesle <oss@thoughtsunificator.me> (https://thoughtsunificator.me)",
 	"license": "MIT",
 	"devDependencies": {
+		"docdash": "^1.2.0",
+		"eslint": "^8.2.0",
+		"jsdoc": "^3.6.7",
 		"nodemon": "^2.0.14"
-	}
+	},
+	"version": "0.0.2"
 }
