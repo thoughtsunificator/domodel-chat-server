@@ -1,5 +1,5 @@
 {
-	"name": "domodel-chat-server",
+	"name": "@domodel-chat/server",
 	"type": "module",
 	"description": "Back-end for domodel-chat",
 	"scripts": {
