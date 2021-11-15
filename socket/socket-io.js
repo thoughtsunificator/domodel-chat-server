@@ -6,24 +6,28 @@ import SocketListener from "../src/socket-listener.js"
  */
 class SocketIOEventListener extends SocketListener {
 
-	disconnect() {
+	async disconnect() {
 		console.log("disconnect " + this.socket.id)
-		const index = this.chat.users.findIndex(user => user.id === this.socket.id)
-		this.chat.users.splice(index, 1)
-		const userChannels = this.chat.channels.filter(channel => channel.users.includes(this.socket.id) === true)
-		for(const channel of userChannels) {
-			channel.users.splice(channel.users.indexOf(this.socket.id), 1)
+		const collection = this.chat.database.collection("channels")
+		const userChannels = await collection.find({ users: { $elemMatch: { socketId: this.socket.id }} }).toArray()
+		await collection.updateMany({}, { $pull : { "users" : { "socketId": this.socket.id } } })
+		for (const channel of userChannels) {
 			const message = {
-				source: "---", time: new Date().getTime(),
-				message: `${this.chat.user.nickname} has left ${channel.name}`,
+				source: "---",
+				date: new Date(),
+				content: `${this.data.nickname} has left ${channel.name}`,
 			}
 			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, {
-				source: "---", time: new Date().getTime(),
+				source: "---",
+				date: new Date(),
 				channel,
 				message
 			})
-			channel.messages.push(message)
-			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.USER_LEFT, { channel, userId: this.socket.id, users: this.chat.users })
+			await collection.updateOne(
+				{ _id : channel._id },
+				{ $push : { "messages" : message } }
+			)
+			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.CHANNEL_USER_LEFT, { socketId: this.socket.id })
 		}
 	}
 

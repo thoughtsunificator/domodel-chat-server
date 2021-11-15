@@ -4,6 +4,7 @@
 class Chat {
 
 	static EVENT = {
+		NETWORK_MESSAGE: "networkMessage",
 		CHANNEL_LIST: "channelList",
 		CHANNEL_JOIN: "channelJoin",
 		CHANNEL_TOPIC: "channelTopic",
@@ -12,10 +13,10 @@ class Chat {
 		CHANNEL_LEAVE: "channelLeave",
 		CHANNEL_MESSAGE: "channelMessage",
 		CHANNEL_DELETE: "channelDelete",
+		CHANNEL_MESSAGE_USER: "channelMessageUser",
+		CHANNEL_USER_JOINED: "channelUserJoined",
+		CHANNEL_USER_LEFT: "channelUserLeft",
 		USER_RENAME: "userRename",
-		USER_JOINED: "userJoined",
-		USER_MESSAGE: "userMessage",
-		USER_LEFT: "userLeft",
 		USER_RENAMED: "userRenamed",
 		USER_NICKNAME_SET: "userNicknameSet",
 	}
@@ -26,15 +27,14 @@ class Chat {
 	static PREFIX_OWNER = "@"
 	static DEFAULT_NICKNAME = "Anon"
 	static DEFAULT_TOPIC = "Topic not set. Use /topic to change the topic."
-	static ALLOWED_CHARACTERS_NICKNAME = [..."abcdefghijklmnopqrstuvwxyz1234567890-_"]
-	static ALLOWED_CHARACTERS_CHANNEL = [..."abcdefghijklmnopqrstuvwxyz1234567890"]
+	static ALLOWED_CHARACTERS_NICKNAME = [ ..."abcdefghijklmnopqrstuvwxyz1234567890-_" ]
+	static ALLOWED_CHARACTERS_CHANNEL = [ ..."abcdefghijklmnopqrstuvwxyz1234567890" ]
 
 	/**
 	 * @param {object} database
 	 */
 	constructor(database) {
 		this._database = database
-		this._user = null
 	}
 
 	/**
@@ -43,17 +43,6 @@ class Chat {
 	 */
 	get database() {
 		return this._database
-	}
-
-	/**
-	 * @type {object}
-	 */
-	get user() {
-		return this._user
-	}
-
-	set user(user) {
-		this._user = user
 	}
 
 }
