@@ -12,6 +12,7 @@ class SocketConnection {
 		this._io = io
 		this._socket = socket
 		this._chat = chat
+		this._data = {}
 	}
 
 	register(eventListener) {
@@ -40,6 +41,14 @@ class SocketConnection {
 	 */
 	get chat() {
 		return this._chat
+	}
+
+	/**
+	 * @readonly
+	 * @type {object}
+	 */
+	get data() {
+		return this._data
 	}
 
 }

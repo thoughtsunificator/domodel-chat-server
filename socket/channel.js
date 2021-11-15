@@ -9,201 +9,327 @@ class ChannelEventListener extends SocketListener {
 	/**
 	 * @param {string} query
 	 */
-	channelList(query) {
+	async channelList(query) {
 		if(typeof query !== "string") {
 			return
 		}
+		const collection = this.chat.database.collection("channels")
+		const channels = await collection.find().toArray()
 		if(query !== null) {
-			this.socket.emit(Chat.EVENT.CHANNEL_LIST, this.chat.channels.filter(channel => channel.name.toLowerCase().includes(query.toLowerCase())))
+			this.socket.emit(Chat.EVENT.CHANNEL_LIST, channels.filter(channel => channel.name.toLowerCase().includes(query.toLowerCase())))
 		} else {
-			this.socket.emit(Chat.EVENT.CHANNEL_LIST, this.chat.channels)
+			this.socket.emit(Chat.EVENT.CHANNEL_LIST, channels)
 		}
 	}
 
 	/**
 	 * @param {string} name
 	 */
-	channelJoin(name) {
+	async channelJoin(name) {
 		if(typeof name !== "string") {
 			return
 		}
-		const chars = [ ...name ]
+		const characters = [ ...name ]
 		const invalidChannelNameMessage = {
-			source: "---", time: new Date().getTime(),
-			message: `"${name}": :Illegal channel name.`,
+			source: "---",
+			date: new Date(),
+			content: `"${name}": :Illegal channel name.`,
 		}
-		if(name.trim().length === 0 || chars.length < 3) {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { message: invalidChannelNameMessage })
+		if(name.trim().length === 0 || characters.length < 3) {
+			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { content: invalidChannelNameMessage })
 			return
-		} else if(chars[0] !== "#") {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { message: invalidChannelNameMessage })
+		} else if(characters[0] !== "#") {
+			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { content: invalidChannelNameMessage })
 			return
 		}
-		for(const char of chars.slice(1)) {
-			if(Chat.ALLOWED_CHARACTERS_CHANNEL.includes(char.toLowerCase()) === false) {
-					this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { message: invalidChannelNameMessage })
-					return
+		for(const character of characters.slice(1)) {
+			if(Chat.ALLOWED_CHARACTERS_CHANNEL.includes(character.toLowerCase()) === false) {
+				this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { content: invalidChannelNameMessage })
+				return
 			}
 		}
-		let channel = this.chat.channels.find(channel => channel.name === name)
-		if (typeof channel !== "undefined") {
-			const channelUsers = channel.users.map(userId => this.chat.users.find(user => user.id === userId))
-			const nicknames = channelUsers.map(user => user.nickname)
-			const renamed = nicknames.includes(this.chat.user.nickname)
-			let nickname = this.chat.user.nickname
+		const collection = this.chat.database.collection("channels")
+		let channel = await collection.findOne({ name })
+		if (channel) {
+			const nicknames = channel.users.filter(user => user.socketId !== this.socket.id).map(user => user.nickname)
+			const renamed = nicknames.includes(this.data.nickname)
+			let nickname = this.data.nickname
 			while (nicknames.includes(nickname)) {
 				nickname += "_"
 			}
 			if (renamed === true) {
 				this.socket.emit(Chat.EVENT.USER_RENAME, nickname)
 				const message = {
-					message: `${this.chat.user.nickname} has renamed to ${nickname}`,
-					source: "---", time: new Date().getTime(),
+					content: `${this.data.nickname} has renamed to ${nickname}`,
+					source: "---",
+					date: new Date(),
 				}
-				const userChannels = this.chat.channels.filter(channel => channel.users.includes(this.socket.id) === true)
-				this.chat.user.nickname = nickname
+				const userChannels = await collection.find({ users: { $elemMatch: { socketId: this.socket.id }} }).toArray()
+				this.data.nickname = nickname
 				for (const channel of userChannels) {
-					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channel, nickname, userId: this.socket.id, users: this.chat.users })
-					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message })
-					channel.messages.push(message)
+					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channelName: channel.name, nickname, socketId: this.socket.id })
+					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
+					await collection.updateOne(
+						{ _id : channel._id },
+						{ $push : { "messages" : message } }
+					)
 				}
 			}
-			channel.users.push(this.socket.id)
+			channel = (await collection.findOneAndUpdate(
+				{ _id : channel._id },
+				{ $push : { "users" : { nickname: this.data.nickname, socketId: this.socket.id } } },
+				{ returnOriginal: false },
+			)).value
 		} else {
-			channel = {
-				owner: this.socket.id,
-				topic: "Topic not set. Use /topic to change the topic.",
+			const id = (await collection.insertOne({
+				topic: Chat.DEFAULT_TOPIC,
 				name,
-				users: [this.socket.id],
+				owner: this.data.nickname,
+				users: [ { socketId: this.socket.id, nickname: this.data.nickname } ],
 				messages: []
-			}
-			this.chat.channels.push(channel)
+			})).insertedId
+			channel = await collection.findOne({ _id: id })
 		}
-		const message = { source: "---", time: new Date().getTime(), message: `${this.chat.user.nickname} has joined ${name}`, }
+		const message = {
+			source: "---",
+			date: new Date(),
+			content: `${this.data.nickname} has joined ${name}`
+		}
 		this.socket.join(name)
-		this.socket.emit(Chat.EVENT.CHANNEL_JOIN, { channel, users: this.chat.users, nickname: this.chat.user.nickname})
-		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message: { source: "---", time: new Date().getTime(), message: `You are now talking on ${name}`, } })
-		this.socket.broadcast.to(name).emit(Chat.EVENT.USER_JOINED, { channel, user: this.chat.user, users: this.chat.users})
-		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message })
-		channel.messages.push(message)
+		this.socket.emit(Chat.EVENT.CHANNEL_JOIN, {
+			channel: {
+				name: channel.name,
+				owner: channel.owner,
+				topic: channel.topic,
+				users: channel.users,
+				messages: []
+			},
+		nickname: this.data.nickname
+	})
+		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+			channelName: name,
+			message: {
+				source: "---",
+				date: new Date(),
+				content: `Now talking on ${name}`,
+			}
+		})
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_JOINED, { channelName: name, socketId: this.socket.id})
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: name, message })
+		collection.updateOne(
+			{ _id : channel._id },
+			{ $push : { "messages" : message } }
+		)
 	}
 
 	/**
 	 * @param {object} data
 	 * @param {string} data.channelName
 	 * @param {object} data.message
-	 * @param {string} data.message.message
+	 * @param {string} data.message.content
 	 */
-	channelMessage(data) {
+	async channelMessage(data) {
 		if(typeof data !== "object") {
 			return
 		}
 		const { channelName, message } = data
-		if(typeof channelName !== "string" || typeof message !== "object" || typeof message.message !== "string") {
+		if(typeof channelName !== "string" || typeof message !== "object" || typeof message.content !== "string") {
 			return
 		}
-		if(message.message.length === 0 || message.message.length > Chat.MAXIMUM_MESSAGE_LENGTH) {
+		if(message.content.length === 0 || message.content.length > Chat.MAXIMUM_MESSAGE_LENGTH) {
 			return
 		}
-		message.time = new Date().getTime()
-		const channel = this.chat.channels.find(channel => channel.name === channelName)
-		channel.messages.push(message)
+		message.date = new Date()
+		const collection = this.chat.database.collection("channels")
+		let channel = await collection.findOne({ name: channelName })
+		await collection.updateOne(
+			{ _id : channel._id },
+			{ $push : { "messages" : message } }
+		)
 		this.io.in(channelName).emit(Chat.EVENT.CHANNEL_MESSAGE, data)
+	}
+
+	/**
+	 * @param {object} data
+	 * @param {string} data.channelName
+	 * @param {string} data.nickname
+	 * @param {string} data.message
+	 */
+	async channelMessageUser(data) {
+		if(typeof data !== "object") {
+			return
+		}
+		const { channelName, nickname, content } = data
+		if(typeof channelName !== "string" || typeof nickname !== "string" || typeof content !== "string") {
+			return
+		}
+		if(content.length === 0 || content.length > Chat.MAXIMUM_MESSAGE_LENGTH) {
+			return
+		}
+		const collection = this.chat.database.collection("channels")
+		const channel = await collection.find({ name: channelName })
+		const user = channel.users.map(socketId => users.find(user => user.socketId === socketId)).find(user => user.nickname === nickname)
+		if(typeof user === "undefined") {
+			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+				message: {
+					source: "---",
+					date: new Date(),
+					content: `Target of PM was not found in this channel.`,
+				}
+			})
+		} else {
+			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+				message: {
+					source: "---",
+					date: new Date(),
+					content: `To ${nickname}: ${content}`,
+				}
+			})
+			this.io.to(user.socketId).emit(Chat.EVENT.CHANNEL_MESSAGE, {
+				message: {
+					source: "---",
+					date: new Date(),
+					content: `From ${this.data.nickname}: ${content}`,
+				}
+			})
+		}
 	}
 
 	/**
 	 * @param {string} name
 	 */
-	channelReconnect(name) {
+	async channelReconnect(name) {
 		if(typeof name !== "string") {
 			return
 		}
 		console.log(`reconnecting to ${name} (${this.socket.id})`)
-		let channel = this.chat.channels.find(channel => channel.name === name)
-		if (typeof channel !== "undefined") {
-			const channelUsers = channel.users.map(userId => this.chat.users.find(user => user.id === userId))
-			const nicknames = channelUsers.map(user => user.nickname)
-			const renamed = nicknames.includes(this.chat.user.nickname)
-			let nickname = this.chat.user.nickname
+		const collection = this.chat.database.collection("channels")
+		let channel = await collection.findOne({ name })
+		if (channel) {
+			const nicknames = channel.users.filter(user => user.socketId !== this.socket.id).map(user => user.nickname)
+			const renamed = nicknames.includes(this.data.nickname)
+			let nickname = this.data.nickname
 			while (nicknames.includes(nickname)) {
 				nickname += "_"
 			}
 			if (renamed === true) {
 				this.socket.emit(Chat.EVENT.USER_RENAME, nickname)
 				const message = {
-					source: "---", time: new Date().getTime(),
-					message: `${this.chat.user.nickname} has renamed to ${nickname}`,
+					source: "---",
+					date: new Date(),
+					content: `${this.data.nickname} has renamed to ${nickname}`,
 				}
-				const userChannels = this.chat.channels.filter(channel => channel.users.includes(this.socket.id) === true)
-				this.chat.user.nickname = nickname
+				const userChannels = await collection.find({ users: { $elemMatch: { socketId: this.socket.id }} }).toArray()
+				this.data.nickname = nickname
 				for (const channel of userChannels) {
-					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channel, nickname, userId: this.socket.id, users: this.chat.users })
-					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message })
-					channel.messages.push(message)
+					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channelName: channel.name, nickname, socketId: this.socket.id })
+					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
+					await collection.updateOne(
+						{ _id : channel._id },
+						{ $push : { "messages" : message } }
+					)
 				}
 			}
-			channel.users.push(this.socket.id)
+			channel = (await collection.findOneAndUpdate(
+				{ _id : channel._id },
+				{ $push : { "users" : { nickname: this.data.nickname, socketId: this.socket.id } } },
+				{ returnOriginal: false },
+			)).value
 		} else {
-			channel = {
-				owner: this.socket.id,
-				topic: "Topic not set. Use /topic to change the topic.",
+			const id = (await collection.insertOne({
+				topic: Chat.DEFAULT_TOPIC,
 				name,
-				users: [this.socket.id],
+				owner: this.data.nickname,
+				users: [ { socketId: this.socket.id, nickname: this.data.nickname } ],
 				messages: []
-			}
-			this.chat.channels.push(channel)
+			})).insertedId
+			channel = await collection.findOne({ _id: id })
 		}
 		const message = {
-			source: "---", time: new Date().getTime(),
-			message: `${this.chat.user.nickname} has joined ${name}`
+			source: "---",
+			date: new Date(),
+			content: `${this.data.nickname} has joined ${name}`
 		}
 		this.socket.join(name)
-		this.socket.emit(Chat.EVENT.CHANNEL_RECONNECT, { channel, users: this.chat.users, nickname: this.chat.user.nickname})
-		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message: { source: "---", time: new Date().getTime(), message: `You are now talking on ${name}`, } })
-		this.socket.broadcast.to(name).emit(Chat.EVENT.USER_JOINED, { channel, user: this.chat.user, users: this.chat.users })
-		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message })
-		channel.messages.push(message)
+		this.socket.emit(Chat.EVENT.CHANNEL_RECONNECT, {
+			channel: {
+				name: channel.name,
+				owner: channel.owner,
+				topic: channel.topic,
+				users: channel.users,
+				messages: []
+			},
+			nickname: this.data.nickname
+		})
+		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+			channelName: name,
+			message: {
+				source: "---",
+				date: new Date(),
+				content: `Now talking on talking on ${name}`
+			}
+		})
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_JOINED, { channelName: name, socketId: this.socket.id })
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
+		collection.updateOne(
+			{ _id : channel._id },
+			{ $push : { "messages" : message } }
+		)
 	}
 
 	/**
 	 * @param {string} name
 	 */
-	channelLeave(name) {
+	async channelLeave(name) {
 		if(typeof name !== "string") {
 			return
 		}
-		const channel = this.chat.channels.find(channel => channel.name === name)
+		const collection = this.chat.database.collection("channels")
+		const channel = await collection.findOne({ name })
 		channel.users.splice(channel.users.indexOf(this.socket.id), 1)
 		const message = {
-			source: "---", time: new Date().getTime(),
-			message: `${this.chat.user.nickname} has left ${name}`,
+			source: "---",
+			date: new Date(),
+			content: `${this.data.nickname} has left ${name}`,
 		}
 		this.socket.leave(name)
-		this.socket.emit(Chat.EVENT.CHANNEL_LEAVE, channel)
-		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message })
-		this.socket.broadcast.to(name).emit(Chat.EVENT.USER_LEFT, { channel, userId: this.socket.id, users: this.chat.users})
-		channel.messages.push(message)
+		this.socket.emit(Chat.EVENT.CHANNEL_LEAVE, name)
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_LEFT, { channelName: name, socketId: this.socket.id })
+		collection.updateOne(
+			{ _id : channel._id },
+			{ $push : { "messages" : message } }
+		)
 	}
 
 	/**
 	 * @param {string} name
 	 */
-	channelDisconnect(name) {
+	async channelDisconnect(name) {
 		if(typeof name !== "string") {
 			return
 		}
-		const channel = this.chat.channels.find(channel => channel.name === name)
+		const collection = this.chat.database.collection("channels")
+		const channel = await collection.findOne({ name })
 		channel.users.splice(channel.users.indexOf(this.socket.id), 1)
 		const message = {
-			message: `${this.chat.user.nickname} has left ${name}`,
-			source: "---", time: new Date().getTime(),
+			content: `${this.data.nickname} has left ${name}`,
+			source: "---",
+			date: new Date(),
 		}
 		this.socket.leave(name)
-		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message: { source: "---", time: new Date().getTime(), message: ` You have left channel ${name}`, } })
-		this.socket.emit(Chat.EVENT.CHANNEL_DISCONNECT, channel)
-		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message })
-		this.socket.broadcast.to(name).emit(Chat.EVENT.USER_LEFT, { channel, userId: this.socket.id, users: this.chat.users })
-		channel.messages.push(message)
+		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: name, message: {
+			source: "---",
+			date: new Date(),
+			content: ` You have left channel ${name}` }
+		})
+		this.socket.emit(Chat.EVENT.CHANNEL_DISCONNECT, name)
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: name, message })
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_LEFT, { channelName: name, socketId: this.socket.id })
+		collection.updateOne(
+			{ _id : channel._id },
+			{ $push : { "messages" : message } }
+		)
 	}
 
 	/**
@@ -211,7 +337,7 @@ class ChannelEventListener extends SocketListener {
 	 * @param {string} data.topic
 	 * @param {string} data.name
 	 */
-	channelTopic(data) {
+	async channelTopic(data) {
 		if(typeof data !== "object") {
 			return
 		}
@@ -219,21 +345,27 @@ class ChannelEventListener extends SocketListener {
 		if(typeof topic !== "string" || typeof name !== "string" || topic.length > Chat.MAXIMUM_TOPIC_LENGTH) {
 			return
 		}
-		const channel =  this.chat.channels.find(channel => channel.name === name)
-		if (channel.owner === this.socket.id) {
+		const collection = this.chat.database.collection("channels")
+		const channel = await collection.findOne({ name })
+		if (channel.owner === this.data.nickname) {
 			channel.topic = topic
 			this.io.in(name).emit(Chat.EVENT.CHANNEL_TOPIC, data)
 			const message = {
-				source: "---", time: new Date().getTime(),
-				message: `Topic was set to "${topic}"`,
+				source: "---",
+				date: new Date(),
+				content: `Topic was set to "${topic}"`,
 			}
-			this.io.in(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channel, message})
-			channel.messages.push(message)
+			this.io.in(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message})
+			collection.updateOne(
+				{ _id : channel._id },
+				{ $push : { "messages" : message } }
+			)
 		} else {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
 				message: {
-					source: "---", time: new Date().getTime(),
-					message: `You are not the owner of ${name}`,
+					source: "---",
+					date: new Date(),
+					content: `You are not the owner of ${name}`,
 				}
 			})
 		}
@@ -242,27 +374,30 @@ class ChannelEventListener extends SocketListener {
 	/**
 	 * @param {string} name
 	 */
-	channelDelete(name) {
+	async channelDelete(name) {
 		if(typeof name !== "string") {
 			return
 		}
-		const channel =  this.chat.channels.find(channel => channel.name === name)
+		const collection = this.chat.database.collection("channels")
+		const channel = await collection.findOne({ name })
 		if (typeof channel === "undefined") {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
 				message: {
-					source: "---", time: new Date().getTime(),
-					message: `${name} does not exist`,
+					source: "---",
+					date: new Date(),
+					content: `${name} does not exist`,
 				}
 			})
-		} else if(channel.owner === this.socket.id) {
-			this.io.in(name).emit(Chat.EVENT.CHANNEL_LEAVE, channel)
+		} else if(channel.owner === this.data.nickname) {
+			this.io.in(name).emit(Chat.EVENT.CHANNEL_LEAVE, name)
 			this.socket.leave(name)
-			this.chat.channels.splice(this.chat.channels.indexOf(channel), 1)
+			channels.splice(channels.indexOf(channel), 1)
 		} else {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
 				message: {
-					source: "---", time: new Date().getTime(),
-					message: `You are not the owner of ${name}`,
+					source: "---",
+					date: new Date(),
+					content: `You are not the owner of ${name}`,
 				}
 			})
 		}
