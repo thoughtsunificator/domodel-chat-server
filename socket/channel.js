@@ -74,18 +74,18 @@ class ChannelEventListener extends SocketListener {
 				}
 			}
 			channel = (await collection.findOneAndUpdate(
-				{ _id : channel._id },
+				{ name },
 				{ $push : { "users" : { nickname: this.data.nickname, socketId: this.socket.id } } },
 				{ returnDocument: "after" },
 			)).value
 		} else {
-			const id = (await collection.insertOne({
+			await collection.insertOne({
 				topic: Chat.DEFAULT_TOPIC,
 				name,
 				owner: this.data.nickname,
 				users: [ { socketId: this.socket.id, nickname: this.data.nickname } ],
-			})).insertedId
-			channel = await collection.findOne({ _id: id })
+			})
+			channel = await collection.findOne({ name })
 		}
 		this.socket.join(name)
 		this.socket.emit(Chat.EVENT.CHANNEL_JOIN, {
@@ -215,18 +215,18 @@ class ChannelEventListener extends SocketListener {
 				}
 			}
 			channel = (await collection.findOneAndUpdate(
-				{ _id : channel._id },
+				{ name },
 				{ $push : { "users" : { nickname: this.data.nickname, socketId: this.socket.id } } },
 				{ returnDocument: "after" },
 			)).value
 		} else {
-			const id = (await collection.insertOne({
+			await collection.insertOne({
 				topic: Chat.DEFAULT_TOPIC,
 				name,
 				owner: this.data.nickname,
 				users: [ { socketId: this.socket.id, nickname: this.data.nickname } ],
-			})).insertedId
-			channel = await collection.findOne({ _id: id })
+			})
+			channel = await collection.findOne({ name })
 		}
 		const message = {
 			source: "---",
@@ -317,6 +317,7 @@ class ChannelEventListener extends SocketListener {
 				date: new Date(),
 				content: `Topic was set to "${topic}"`,
 			}
+			await collection.updateOne({ name }, { $set: { topic }})
 			this.io.in(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message})
 		} else {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
