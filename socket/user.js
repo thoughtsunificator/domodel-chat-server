@@ -13,7 +13,6 @@ class UserEventListener extends SocketListener {
 		if(typeof nickname !== "string" || nickname === this.data.nickname) {
 			return
 		}
-		console.log(nickname)
 		const collection = this.chat.database.collection("channels")
 		const characters = [ ...nickname ]
 		const invalidNickMessage = {
