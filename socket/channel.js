@@ -321,6 +321,7 @@ class ChannelEventListener extends SocketListener {
 			this.io.in(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message})
 		} else {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+				channelName: name,
 				message: {
 					source: "---",
 					date: new Date(),
@@ -353,6 +354,7 @@ class ChannelEventListener extends SocketListener {
 			channels.splice(channels.indexOf(channel), 1)
 		} else {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+				channelName: name,
 				message: {
 					source: "---",
 					date: new Date(),
