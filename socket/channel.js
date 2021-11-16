@@ -51,6 +51,7 @@ class ChannelEventListener extends SocketListener {
 		const collection = this.chat.database.collection("channels")
 		let channel = await collection.findOne({ name })
 		if (channel) {
+			console.log("found")
 			const nicknames = channel.users.filter(user => user.socketId !== this.socket.id).map(user => user.nickname)
 			const renamed = nicknames.includes(this.data.nickname)
 			let nickname = this.data.nickname
@@ -78,7 +79,7 @@ class ChannelEventListener extends SocketListener {
 			channel = (await collection.findOneAndUpdate(
 				{ _id : channel._id },
 				{ $push : { "users" : { nickname: this.data.nickname, socketId: this.socket.id } } },
-				{ returnOriginal: false },
+				{ returnDocument: "after" },
 			)).value
 		} else {
 			const id = (await collection.insertOne({
@@ -90,6 +91,7 @@ class ChannelEventListener extends SocketListener {
 			})).insertedId
 			channel = await collection.findOne({ _id: id })
 		}
+		console.log(channel.users)
 		const message = {
 			source: "---",
 			date: new Date(),
@@ -102,19 +104,15 @@ class ChannelEventListener extends SocketListener {
 				owner: channel.owner,
 				topic: channel.topic,
 				users: channel.users,
-				messages: []
+				messages: [{
+					source: "---",
+					date: new Date(),
+					content: `Now talking on ${name}`,
+				}]
 			},
 		nickname: this.data.nickname
 	})
-		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
-			channelName: name,
-			message: {
-				source: "---",
-				date: new Date(),
-				content: `Now talking on ${name}`,
-			}
-		})
-		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_JOINED, { channelName: name, socketId: this.socket.id})
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_JOINED, { channelName: name,  user: { socketId: this.socket.id, nickname: this.data.nickname } })
 		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: name, message })
 		collection.updateOne(
 			{ _id : channel._id },
@@ -233,7 +231,7 @@ class ChannelEventListener extends SocketListener {
 			channel = (await collection.findOneAndUpdate(
 				{ _id : channel._id },
 				{ $push : { "users" : { nickname: this.data.nickname, socketId: this.socket.id } } },
-				{ returnOriginal: false },
+				{ returnDocument: "after" },
 			)).value
 		} else {
 			const id = (await collection.insertOne({
@@ -257,19 +255,15 @@ class ChannelEventListener extends SocketListener {
 				owner: channel.owner,
 				topic: channel.topic,
 				users: channel.users,
-				messages: []
+				messages: [{
+					source: "---",
+					date: new Date(),
+					content: `Now talking on talking on ${name}`
+				}]
 			},
 			nickname: this.data.nickname
 		})
-		this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
-			channelName: name,
-			message: {
-				source: "---",
-				date: new Date(),
-				content: `Now talking on talking on ${name}`
-			}
-		})
-		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_JOINED, { channelName: name, socketId: this.socket.id })
+		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_USER_JOINED, { channelName: name, user: { socketId: this.socket.id , nickname: this.data.nickname } })
 		this.socket.broadcast.to(name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
 		collection.updateOne(
 			{ _id : channel._id },
