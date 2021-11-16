@@ -4,6 +4,7 @@
 class Chat {
 
 	static EVENT = {
+		GLOBAL_MESSAGE: "globalMessage",
 		NETWORK_MESSAGE: "networkMessage",
 		CHANNEL_LIST: "channelList",
 		CHANNEL_JOIN: "channelJoin",

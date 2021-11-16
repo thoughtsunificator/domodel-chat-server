@@ -21,10 +21,6 @@ class SocketIOEventListener extends SocketListener {
 				message,
 				channelName: channel.name,
 			})
-			await collection.updateOne(
-				{ _id : channel._id },
-				{ $push : { "messages" : message } }
-			)
 			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.CHANNEL_USER_LEFT, { channelName: channel.name, socketId: this.socket.id })
 		}
 	}

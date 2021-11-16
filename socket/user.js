@@ -57,10 +57,6 @@ class UserEventListener extends SocketListener {
 				for (const channel of userChannels) {
 					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { nickname, socketId: this.socket.id })
 					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
-					await collection.updateOne(
-						{ _id : channel._id },
-						{ $push : { "messages" : message } }
-					)
 				}
 			}
 		}
