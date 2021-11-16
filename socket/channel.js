@@ -64,11 +64,13 @@ class ChannelEventListener extends SocketListener {
 					source: "---",
 					date: new Date(),
 				}
+				this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, { message })
 				const userChannels = await collection.find({ users: { $elemMatch: { socketId: this.socket.id }} }).toArray()
 				this.data.nickname = nickname
+				await collection.updateMany({}, { "$set": { "users.$[elem].nickname": nickname } }, { "arrayFilters": [{ "elem.socketId": this.socketId }], "multi": true })
 				for (const channel of userChannels) {
 					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channelName: channel.name, nickname, socketId: this.socket.id })
-					this.io.in(channel.name).emit(Chat.EVENT.GLOBAL_MESSAGE, { message })
+					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel, message })
 				}
 			}
 			channel = (await collection.findOneAndUpdate(
@@ -203,11 +205,13 @@ class ChannelEventListener extends SocketListener {
 					date: new Date(),
 					content: `${this.data.nickname} has renamed to ${nickname}`,
 				}
-				const userChannels = await collection.find({ users: { $elemMatch: { socketId: this.socket.id }} }).toArray()
+				this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, { message })
 				this.data.nickname = nickname
+				const userChannels = await collection.find({ users: { $elemMatch: { socketId: this.socket.id }} }).toArray()
+				await collection.update({}, { "$set": { "users.$[elem].nickname": nickname } }, { "arrayFilters": [{ "elem.socketId": this.socketId }], "multi": true })
 				for (const channel of userChannels) {
 					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channelName: channel.name, nickname, socketId: this.socket.id })
-					this.io.in(channel.name).emit(Chat.EVENT.GLOBAL_MESSAGE, { message })
+					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel, message })
 				}
 			}
 			channel = (await collection.findOneAndUpdate(

@@ -54,6 +54,8 @@ class UserEventListener extends SocketListener {
 					content: `${this.data.nickname} has renamed to ${nickname}`,
 				}
 				this.data.nickname = nickname
+				await collection.updateMany({}, { "$set": { "users.$[elem].nickname": nickname } }, { "arrayFilters": [{ "elem.socketId": this.socketId }], "multi": true })
+				this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, { message })
 				for (const channel of userChannels) {
 					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { nickname, socketId: this.socket.id })
 					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
