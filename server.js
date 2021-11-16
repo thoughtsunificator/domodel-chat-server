@@ -21,7 +21,7 @@ const io = new Server(httpServer, {
 })
 const chat = new Chat(database)
 const rateLimiter = new RateLimiterMemory({
-	points: 5,
+	points: 10,
 	duration: 2,
 })
 const eventListeners = []
@@ -34,6 +34,8 @@ async function rateLimiterMiddleware(socket, next) {
 		console.error(exception)
 	}
 }
+
+await database.collection("channels").updateMany({}, { $set: { users: [] } })
 
 for(const file of fs.readdirSync("./socket/")) {
 	const eventListener = new ((await import(`./socket/${file}`)).default)

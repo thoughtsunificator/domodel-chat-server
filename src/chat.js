@@ -4,6 +4,7 @@
 class Chat {
 
 	static EVENT = {
+		GLOBAL_MESSAGE: "globalMessage",
 		NETWORK_MESSAGE: "networkMessage",
 		CHANNEL_LIST: "channelList",
 		CHANNEL_JOIN: "channelJoin",
@@ -12,13 +13,13 @@ class Chat {
 		CHANNEL_RECONNECT: "channelReconnect",
 		CHANNEL_LEAVE: "channelLeave",
 		CHANNEL_MESSAGE: "channelMessage",
+		CHANNEL_PRIVATE_MESSAGE: "channelPrivateMessage",
 		CHANNEL_DELETE: "channelDelete",
 		CHANNEL_MESSAGE_USER: "channelMessageUser",
 		CHANNEL_USER_JOINED: "channelUserJoined",
 		CHANNEL_USER_LEFT: "channelUserLeft",
 		USER_RENAME: "userRename",
-		USER_RENAMED: "userRenamed",
-		USER_NICKNAME_SET: "userNicknameSet",
+		USER_RENAMED: "userRenamed"
 	}
 
 	static MAXIMUM_TOPIC_LENGTH = 200
