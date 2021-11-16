@@ -36,22 +36,21 @@ class ChannelEventListener extends SocketListener {
 			content: `"${name}": :Illegal channel name.`,
 		}
 		if(name.trim().length === 0 || characters.length < 3) {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { content: invalidChannelNameMessage })
+			this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, { message: invalidChannelNameMessage })
 			return
 		} else if(characters[0] !== "#") {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { content: invalidChannelNameMessage })
+			this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, { message: invalidChannelNameMessage })
 			return
 		}
 		for(const character of characters.slice(1)) {
 			if(Chat.ALLOWED_CHARACTERS_CHANNEL.includes(character.toLowerCase()) === false) {
-				this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, { content: invalidChannelNameMessage })
+				this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, { message: invalidChannelNameMessage })
 				return
 			}
 		}
 		const collection = this.chat.database.collection("channels")
 		let channel = await collection.findOne({ name })
 		if (channel) {
-			console.log("found")
 			const nicknames = channel.users.filter(user => user.socketId !== this.socket.id).map(user => user.nickname)
 			const renamed = nicknames.includes(this.data.nickname)
 			let nickname = this.data.nickname
@@ -91,7 +90,6 @@ class ChannelEventListener extends SocketListener {
 			})).insertedId
 			channel = await collection.findOne({ _id: id })
 		}
-		console.log(channel.users)
 		const message = {
 			source: "---",
 			date: new Date(),
@@ -165,25 +163,25 @@ class ChannelEventListener extends SocketListener {
 			return
 		}
 		const collection = this.chat.database.collection("channels")
-		const channel = await collection.find({ name: channelName })
-		const user = channel.users.map(socketId => users.find(user => user.socketId === socketId)).find(user => user.nickname === nickname)
+		const channel = await collection.findOne({ name: channelName })
+		const user = channel.users.find(user => user.nickname === nickname)
 		if(typeof user === "undefined") {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+			this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, {
 				message: {
 					source: "---",
 					date: new Date(),
-					content: `Target of PM was not found in this channel.`,
+					content: `${data.nickname} was not found in ${data.channelName}.`,
 				}
 			})
 		} else {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+			this.socket.emit(Chat.EVENT.CHANNEL_PRIVATE_MESSAGE, {
 				message: {
 					source: "---",
 					date: new Date(),
 					content: `To ${nickname}: ${content}`,
 				}
 			})
-			this.io.to(user.socketId).emit(Chat.EVENT.CHANNEL_MESSAGE, {
+			this.io.to(user.socketId).emit(Chat.EVENT.CHANNEL_PRIVATE_MESSAGE, {
 				message: {
 					source: "---",
 					date: new Date(),
@@ -375,7 +373,7 @@ class ChannelEventListener extends SocketListener {
 		const collection = this.chat.database.collection("channels")
 		const channel = await collection.findOne({ name })
 		if (typeof channel === "undefined") {
-			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
+			this.socket.emit(Chat.EVENT.NETWORK_MESSAGE, {
 				message: {
 					source: "---",
 					date: new Date(),

@@ -18,16 +18,14 @@ class SocketIOEventListener extends SocketListener {
 				content: `${this.data.nickname} has left ${channel.name}`,
 			}
 			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, {
-				source: "---",
-				date: new Date(),
-				channel,
-				message
+				message,
+				channelName: channel.name,
 			})
 			await collection.updateOne(
 				{ _id : channel._id },
 				{ $push : { "messages" : message } }
 			)
-			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.CHANNEL_USER_LEFT, { socketId: this.socket.id })
+			this.socket.broadcast.to(channel.name).emit(Chat.EVENT.CHANNEL_USER_LEFT, { channelName: channel.name, socketId: this.socket.id })
 		}
 	}
 
