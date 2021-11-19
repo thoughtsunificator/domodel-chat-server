@@ -256,7 +256,7 @@ class ChannelEventListener extends SocketListener {
 		}
 		const collection = this.chat.database.collection("channels")
 		const channel = await collection.findOne({ name })
-		channel.users.splice(channel.users.indexOf(this.socket.id), 1)
+		await collection.updateMany({ name }, { $pull : { "users" : { "socketId": this.socket.id } } })
 		const message = {
 			source: "---",
 			date: new Date(),
@@ -277,7 +277,7 @@ class ChannelEventListener extends SocketListener {
 		}
 		const collection = this.chat.database.collection("channels")
 		const channel = await collection.findOne({ name })
-		channel.users.splice(channel.users.indexOf(this.socket.id), 1)
+		await collection.updateMany({ name }, { $pull : { "users" : { "socketId": this.socket.id } } })
 		const message = {
 			content: `${this.data.nickname} has left ${name}`,
 			source: "---",
@@ -351,7 +351,7 @@ class ChannelEventListener extends SocketListener {
 		} else if(channel.owner === this.data.nickname) {
 			this.io.in(name).emit(Chat.EVENT.CHANNEL_LEAVE, name)
 			this.socket.leave(name)
-			channels.splice(channels.indexOf(channel), 1)
+			await collection.deleteOne({ name })
 		} else {
 			this.socket.emit(Chat.EVENT.CHANNEL_MESSAGE, {
 				channelName: name,
