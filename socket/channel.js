@@ -70,7 +70,7 @@ class ChannelEventListener extends SocketListener {
 				await collection.updateMany({}, { "$set": { "users.$[elem].nickname": nickname } }, { "arrayFilters": [{ "elem.socketId": this.socketId }], "multi": true })
 				for (const channel of userChannels) {
 					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channelName: channel.name, nickname, socketId: this.socket.id })
-					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel, message })
+					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
 				}
 			}
 			channel = (await collection.findOneAndUpdate(
@@ -211,7 +211,7 @@ class ChannelEventListener extends SocketListener {
 				await collection.update({}, { "$set": { "users.$[elem].nickname": nickname } }, { "arrayFilters": [{ "elem.socketId": this.socketId }], "multi": true })
 				for (const channel of userChannels) {
 					this.io.in(channel.name).emit(Chat.EVENT.USER_RENAMED, { channelName: channel.name, nickname, socketId: this.socket.id })
-					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel, message })
+					this.io.in(channel.name).emit(Chat.EVENT.CHANNEL_MESSAGE, { channelName: channel.name, message })
 				}
 			}
 			channel = (await collection.findOneAndUpdate(
