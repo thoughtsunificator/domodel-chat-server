@@ -17,9 +17,9 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```json
 {
     "message": {
-      "source": string,
-      "date": Date,
-      "content": string,
+      "source": "string",
+      "date": "Date",
+      "content": "string"
     }
 }
 ```
@@ -30,9 +30,9 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```json
 {
     "message": {
-      "source": string,
-      "date": Date,
-      "content": string,
+      "source": "string",
+      "date": "Date",
+      "content": "string"
     }
 }
 ```
@@ -42,7 +42,7 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "query": string
+  "query": "string"
 }
 ```
 
@@ -51,7 +51,7 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "name": string
+  "name": "string"
 }
 ```
 
@@ -61,8 +61,8 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```json
 {
   "data": {
-    "topic": string,
-    "name": string
+    "topic": "string",
+    "name": "string"
   }
 }
 ```
@@ -72,7 +72,7 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "name": string
+  "name": "string"
 }
 ```
 
@@ -81,7 +81,7 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "name": string
+  "name": "string"
 }
 ```
 
@@ -90,7 +90,7 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "name": string
+  "name": "string"
 }
 ```
 
@@ -99,11 +99,11 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "channelName": string,
+  "channelName": "string",
   "message": {
-    "source": string,
-    "date": Date,
-    "content": string,
+    "source": "string",
+    "date": "Date",
+    "content": "string"
   }
 }
 ```
@@ -113,11 +113,11 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "channelName": string,
+  "channelName": "string",
   "message": {
-    "source": string,
-    "date": Date,
-    "content": string,
+    "source": "string",
+    "date": "Date",
+    "content": "string"
   }
 }
 ```
@@ -127,7 +127,7 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "name": string  
+  "name": "string"  
 }
 ```
 
@@ -136,9 +136,9 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "nickname": string, 
-  "content": string, 
-  "channelName": string
+  "nickname": "string", 
+  "content": "string", 
+  "channelName": "string"
 }
 ```
 
@@ -147,10 +147,10 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ```json
 {
-  "channelName": string, 
+  "channelName": "string", 
   "user": { 
-    "socketId": string, 
-    "nickname": string
+    "socketId": "string", 
+    "nickname": "string"
   }
 }
 ```
@@ -175,8 +175,8 @@ string
 
 ```json
 {
-  "channelName": string, 
-  "nickname": string, 
-  "socketId": string
+  "channelName": "string", 
+  "nickname": "string", 
+  "socketId": "string"
 }
 ```
