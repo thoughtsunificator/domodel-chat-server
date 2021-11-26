@@ -11,8 +11,9 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ## Events
 
-### Event.GLOBAL_MESSAGE
+Once client send an event to the WebSocket server it will usually respond with the same event and/or trigger other events.
 
+### Event.GLOBAL_MESSAGE
 
 ```json
 {
@@ -26,7 +27,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.NETWORK_MESSAGE
 
-
 ```json
 {
     "message": {
@@ -39,7 +39,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_LIST
 
-
 ```json
 {
   "query": "string"
@@ -48,7 +47,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_JOIN
 
-
 ```json
 {
   "name": "string"
@@ -56,7 +54,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```
 
 ### Event.CHANNEL_TOPIC
-
 
 ```json
 {
@@ -69,7 +66,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_DISCONNECT
 
-
 ```json
 {
   "name": "string"
@@ -77,7 +73,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```
 
 ### Event.CHANNEL_RECONNECT
-
 
 ```json
 {
@@ -87,7 +82,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_LEAVE
 
-
 ```json
 {
   "name": "string"
@@ -95,7 +89,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```
 
 ### Event.CHANNEL_MESSAGE
-
 
 ```json
 {
@@ -110,7 +103,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_PRIVATE_MESSAGE
 
-
 ```json
 {
   "channelName": "string",
@@ -124,7 +116,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_DELETE
 
-
 ```json
 {
   "name": "string"  
@@ -132,7 +123,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```
 
 ### Event.CHANNEL_MESSAGE_USER
-
 
 ```json
 {
@@ -143,7 +133,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 ```
 
 ### Event.CHANNEL_USER_JOINED
-
 
 ```json
 {
@@ -157,7 +146,6 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.CHANNEL_USER_LEFT
 
-
 ```json
 {
   "channelName": "string", 
@@ -167,11 +155,9 @@ Back-end for [domodel-chat](https://github.com/thoughtsunificator/domodel-chat).
 
 ### Event.USER_RENAME
 
-
 string
 
 ### Event.USER_RENAMED
-
 
 ```json
 {
