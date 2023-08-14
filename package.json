@@ -23,6 +23,7 @@
 	"author": "Romain Lebesle <oss@thoughtsunificator.me> (https://thoughtsunificator.me)",
 	"license": "MIT",
 	"devDependencies": {
+		"@flydotio/dockerfile": "^0.4.3",
 		"docdash": "^1.2.0",
 		"eslint": "^8.2.0",
 		"jsdoc": "^3.6.7",
